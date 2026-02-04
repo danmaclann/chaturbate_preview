@@ -10,7 +10,7 @@
 // @match        https://chaturbate.com/couple-cams/
 // @match        https://chaturbate.com/male-cams/
 // @match        https://chaturbate.com/trans-cams/
-// @require      https://cdn.jsdelivr.net/npm/hls.js@latest
+// @require      https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.8/hls.min.js
 // @run-at       document-idle
 // @downloadURL  https://github.com/danmaclann/chaturbate_preview/raw/refs/heads/main/chaturbate_preview.user.js
 // @updateURL    https://github.com/danmaclann/chaturbate_preview/raw/refs/heads/main/chaturbate_preview.user.js
