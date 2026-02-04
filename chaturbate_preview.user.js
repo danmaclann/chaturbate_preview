@@ -1,15 +1,11 @@
 // ==UserScript==
 // @name         Chaturbate Hover Preview
 // @namespace    https://github.com/danmaclann
-// @version      1.0
+// @version      1.001
 // @license      MIT
 // @description  Replaces the card image with a stream.
 // @author       danmaclann
-// @match        https://chaturbate.com/
-// @match        https://chaturbate.com/female-cams/
-// @match        https://chaturbate.com/couple-cams/
-// @match        https://chaturbate.com/male-cams/
-// @match        https://chaturbate.com/trans-cams/
+// @match        https://chaturbate.com/*
 // @require      https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.8/hls.min.js
 // @run-at       document-idle
 // @downloadURL  https://github.com/danmaclann/chaturbate_preview/raw/refs/heads/main/chaturbate_preview.user.js
