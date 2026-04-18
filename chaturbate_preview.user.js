@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chaturbate Hover Preview
 // @namespace    https://github.com/danmaclann
-// @version      1.003
+// @version      1.004
 // @license      MIT
 // @description  Replaces the card image with a stream.
 // @author       danmaclann
@@ -71,8 +71,8 @@
     }
 
     function createVideoPlayer(container, m3u8Url) {
-        // Updated to support both old and new image selectors
-        const img = container.querySelector('img.room_thumbnail, img[data-testid="room-card-image"]');
+        // Updated to support old selector, new testid selector, and the new FollowedDropdown image
+        const img = container.querySelector('img.room_thumbnail, img[data-testid="room-card-image"], img.FollowedDropdown__room-image');
         if (!img) return;
 
         const width = img.clientWidth;
@@ -128,57 +128,62 @@
         }
     }
 
+    function attachHoverEvents(card, containerNode, roomSlug) {
+        if (!roomSlug) return;
+        
+        card.addEventListener('mouseenter', () => {
+            hoverTimeout = setTimeout(async () => {
+                if (currentContainer) cleanupPlayer();
+                try {
+                    const url = await getStreamUrl(roomSlug);
+                    if (card.matches(':hover')) createVideoPlayer(containerNode, url);
+                } catch (e) {}
+            }, HOVER_DELAY);
+        });
+
+        card.addEventListener('mouseleave', () => cleanupPlayer());
+    }
+
     function addListeners() {
-        // Updated to target both old and new list classes/data-testids
+        // Main page and generic room cards
         document.querySelectorAll('li.roomCard, li[data-testid="room-card"]').forEach(card => {
             if (card.dataset.previewBound) return;
             card.dataset.previewBound = 'true';
 
-            // Updated thumbnail container selector
             const thumbContainer = card.querySelector('.room_thumbnail_container, [data-testid="room-card-image-anchor"]');
             if (!thumbContainer) return;
 
             const roomSlug = thumbContainer.getAttribute('data-room');
-            if (!roomSlug) return;
+            attachHoverEvents(card, thumbContainer, roomSlug);
+        });
 
-            card.addEventListener('mouseenter', () => {
-                hoverTimeout = setTimeout(async () => {
-                    if (currentContainer) cleanupPlayer();
-                    try {
-                        const url = await getStreamUrl(roomSlug);
-                        if (card.matches(':hover')) createVideoPlayer(thumbContainer, url);
-                    } catch (e) {}
-                }, HOVER_DELAY);
-            });
+        // NEW: Followed Dropdown list parsing
+        document.querySelectorAll('div.FollowedDropdown__room').forEach(card => {
+            if (card.dataset.previewBound) return;
+            card.dataset.previewBound = 'true';
 
-            card.addEventListener('mouseleave', () => cleanupPlayer());
+            const anchor = card.querySelector('a.FollowedDropdown__room-link');
+            if (!anchor) return;
+
+            // Extract username/room_slug directly from the href attribute since there's no data-room
+            const href = anchor.getAttribute('href');
+            if (!href) return;
+            const roomSlug = href.replace(/\//g, ''); // Removes the slashes to get the plain string
+
+            attachHoverEvents(card, anchor, roomSlug);
         });
     }
 
     function addFollowedListeners(panel) {
-        // Updated followed panel card selectors
         panel.querySelectorAll('div.roomElement, li[data-testid="room-card"]').forEach(card => {
             if (card.dataset.previewBound) return;
             card.dataset.previewBound = 'true';
 
-            // Updated anchor selector
             const anchor = card.querySelector('a.roomElementAnchor[data-room], a[data-testid="room-card-image-anchor"][data-room]');
             if (!anchor) return;
 
             const roomSlug = anchor.getAttribute('data-room');
-            if (!roomSlug) return;
-
-            card.addEventListener('mouseenter', () => {
-                hoverTimeout = setTimeout(async () => {
-                    if (currentContainer) cleanupPlayer();
-                    try {
-                        const url = await getStreamUrl(roomSlug);
-                        if (card.matches(':hover')) createVideoPlayer(anchor, url);
-                    } catch (e) {}
-                }, HOVER_DELAY);
-            });
-
-            card.addEventListener('mouseleave', () => cleanupPlayer());
+            attachHoverEvents(card, anchor, roomSlug);
         });
     }
 
@@ -200,11 +205,9 @@
         }
     }
 
-    // --- NEW: Bulletproof State Checker ---
     function checkPanelState() {
-        const panel = document.querySelector('[data-testid="followed-rooms-list"]');
+        const panel = document.querySelector('[data-testid="followed-rooms-list"], .FollowedDropdown__rooms');
 
-        // Checks if the panel actually exists AND has physical dimensions (handles 'display: none')
         const isVisible = panel && panel.getBoundingClientRect().height > 0;
 
         if (isVisible && !isFollowedPanelOpen) {
@@ -216,7 +219,6 @@
         }
     }
 
-    // Main observer just handles generic page loads and triggers the state check
     const observer = new MutationObserver((mutations) => {
         let shouldUpdate = false;
         for (const m of mutations) {
@@ -226,21 +228,17 @@
             }
         }
         if (shouldUpdate) addListeners();
-
-        // Evaluate final DOM state after any mutation finishes
         checkPanelState();
     });
 
     observer.observe(document.body, { childList: true, subtree: true });
 
-    // Catch clicks (like clicking off the menu) that hide it without a DOM mutation
     document.addEventListener('click', () => {
-        // 100ms delay allows React's click handlers to process and hide the menu first
         setTimeout(checkPanelState, 100);
     });
 
     addListeners();
-    checkPanelState(); // Run once on startup just in case
+    checkPanelState();
 
-    log('Loaded (v1.003)');
+    log('Loaded (v1.004)');
 })();
