@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Chaturbate Hover Preview
 // @namespace    https://github.com/danmaclann
-// @version      1.002
+// @version      1.003
 // @license      MIT
 // @description  Replaces the card image with a stream.
 // @author       danmaclann
@@ -9,7 +9,7 @@
 // @require      https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.8/hls.min.js
 // @run-at       document-idle
 // @downloadURL  https://github.com/danmaclann/chaturbate_preview/raw/refs/heads/main/chaturbate_preview.user.js
-// @updateURL    https://update.greasyfork.org/scripts/565135/Chaturbate%20Hover%20Preview.user.js
+// @updateURL    https://github.com/danmaclann/chaturbate_preview/raw/refs/heads/main/chaturbate_preview.user.js
 // @icon         https://web.static.mmcdn.com/favicons/favicon.ico
 // ==/UserScript==
 
@@ -71,7 +71,8 @@
     }
 
     function createVideoPlayer(container, m3u8Url) {
-        const img = container.querySelector('img.room_thumbnail');
+        // Updated to support both old and new image selectors
+        const img = container.querySelector('img.room_thumbnail, img[data-testid="room-card-image"]');
         if (!img) return;
 
         const width = img.clientWidth;
@@ -128,11 +129,13 @@
     }
 
     function addListeners() {
-        document.querySelectorAll('li.roomCard').forEach(card => {
+        // Updated to target both old and new list classes/data-testids
+        document.querySelectorAll('li.roomCard, li[data-testid="room-card"]').forEach(card => {
             if (card.dataset.previewBound) return;
             card.dataset.previewBound = 'true';
 
-            const thumbContainer = card.querySelector('.room_thumbnail_container');
+            // Updated thumbnail container selector
+            const thumbContainer = card.querySelector('.room_thumbnail_container, [data-testid="room-card-image-anchor"]');
             if (!thumbContainer) return;
 
             const roomSlug = thumbContainer.getAttribute('data-room');
@@ -153,11 +156,13 @@
     }
 
     function addFollowedListeners(panel) {
-        panel.querySelectorAll('div.roomElement').forEach(card => {
+        // Updated followed panel card selectors
+        panel.querySelectorAll('div.roomElement, li[data-testid="room-card"]').forEach(card => {
             if (card.dataset.previewBound) return;
             card.dataset.previewBound = 'true';
 
-            const anchor = card.querySelector('a.roomElementAnchor[data-room]');
+            // Updated anchor selector
+            const anchor = card.querySelector('a.roomElementAnchor[data-room], a[data-testid="room-card-image-anchor"][data-room]');
             if (!anchor) return;
 
             const roomSlug = anchor.getAttribute('data-room');
@@ -237,5 +242,5 @@
     addListeners();
     checkPanelState(); // Run once on startup just in case
 
-    log('Loaded (v1.002)');
+    log('Loaded (v1.003)');
 })();
